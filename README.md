@@ -2,10 +2,18 @@
 
 Coordinación de Bienestar Social · División de Apoyo Técnico y Mejora de Procesos (DATMP)
 
-Tablero que compara lo programado en el PAA contra lo realizado en inscripciones y asistencias, por año, OOAD, UOPSI, área normativa, tipo y clave de actividad. Tiene dos pestañas:
+Tablero que compara lo programado en el PAA contra lo realizado en inscripciones y asistencias, por año, OOAD, UOPSI, CEC, área normativa, tipo y clave de actividad. El tablero está en una sola vista:
 
-1. **Avance programado vs. realizado**: indicadores, mapa por OOAD, evolución anual y mensual, áreas normativas, actividades y tablas de detalle.
-2. **Comparativo de indicadores**: inscripciones, asistencias y usuarios nominales realizados, por OOAD, UOPSI y actividad.
+1. **Datos generales**: inscripciones, asistencias y usuarios nominales realizados, más las asistencias por inscripción y las inscripciones por usuario nominal.
+2. **Avance programado vs. realizado**: indicadores, perfil de la población inscrita (por inscripciones o por usuarios nominales), mapa por OOAD, evolución anual y mensual, áreas normativas y actividades.
+3. **Tablas por OOAD y por actividad**, cada una con dos vistas: avance programado vs. realizado y datos reales.
+
+## Exportar
+
+En la barra de filtros hay dos botones:
+
+- **Exportar PDF**: reporte con una portada que detalla los datos descargados (año, OOAD, UOPSI, CEC, área, tipo, grupo y actividad), los apartados 01 a 08 tal como se ven en el tablero y las tablas completas por OOAD y por actividad, con encabezado institucional y numeración de páginas.
+- **Exportar Excel**: libro con una hoja de portada (filtros y contenido) y una hoja por apartado, con el formato institucional, totales con fórmulas, filtros de columna y una hoja «Base detallada» para tablas dinámicas. Incluye inscripciones y asistencias, sin importar la unidad elegida en el tablero.
 
 ## Contenido del repositorio
 
@@ -32,7 +40,7 @@ Tablero que compara lo programado en el PAA contra lo realizado en inscripciones
 
 Cuando haya un nuevo corte del registro de inscripciones o un nuevo PAA:
 
-1. Coloca en una carpeta los archivos de Excel, uno por año, con nombres como `PAA_2026.xlsx` e `Inscritos_2026.xlsx` (o `Inscritos2026.xlsx`). Los archivos acumulados de varios años se ignoran.
+1. Coloca en una carpeta los archivos de Excel, uno por año, con nombres como `PAA_2026.xlsx` e `Inscritos_2026.xlsx` (o `Inscritos2026.xlsx`), junto con `Catálogo agrupado.xlsx`. Los archivos acumulados de varios años se ignoran.
 2. Instala los requisitos una sola vez:
    ```
    pip install -r scripts/requirements.txt
@@ -47,6 +55,11 @@ El script detecta automáticamente el último año, el último mes con inscripci
 
 ## Reglas de cálculo
 
+- **Grupo de actividad:** se toma de la hoja «Agrupaciones» del archivo `Catálogo agrupado.xlsx` (columna Agrupación), por año y clave de actividad. Si una clave no aparece en el año, se usa su agrupación más frecuente; las claves 31806 (Verano entre telones) y 43701 (Curso de habilidad física, club), que no están en el catálogo, se asignan a Curso Vacacional y a Personas mayores y cuidadores, respectivamente; cualquier otra clave ausente se marca como «Sin agrupación». Al elegir un grupo, el filtro de actividad solo muestra las actividades de ese grupo.
+- **Usuarios nominales** (datos generales, tablas de indicadores realizados y perfil): se toman de la carpeta `Nominales` (un archivo por año, de 2021 a 2025; todas las hojas con `REF_CURP`). Se cuentan personas únicas por `REF_CURP`. Si el CURP está vacío, se busca el de la misma persona por clave de alumno o por nombre completo y fecha de nacimiento; si no existe, se le asigna un identificador propio para que la inscripción cuente. Al sumar varios años, una persona se cuenta una vez en cada año; en los desgloses por OOAD, UOPSI o actividad, una persona se cuenta en cada renglón en el que tiene inscripciones. El perfil de usuarios nominales clasifica a cada persona con el sexo, la edad (columna `Edad_calculada`; si no existe, `EDAD` o `CAN_EDAD`) y la calidad jurídica (`NOM_CONDICION` y `NOM_TIPO_USUARIO`) que más se repiten en sus inscripciones del año. El tablero solo publica totales, nunca datos personales.
+- **CEC:** se toma de la columna `CVE_CEC` del PAA y del registro de inscripciones: 0 corresponde a UOPSI y cualquier valor mayor a 0, a CEC.
+- **Filtros:** año, OOAD, UOPSI, CEC, área normativa, tipo, grupo de actividad y actividad admiten una, varias o todas las opciones. Cada lista muestra solo las opciones con datos para el resto de los filtros.
+
 - **Programado:** suma de `CAN_CUPO` (inscripciones) y `CAN_ASISTENCIAS` (asistencias) del PAA.
 - **Realizado:** suma de `CAN_INSCRITOS` y `CAN_ASISTENCIAS` del registro de inscripciones.
 - **Comparación:** por año, OOAD, UOPSI y clave de actividad, sin importar el grupo.
@@ -54,8 +67,5 @@ El script detecta automáticamente el último año, el último mes con inscripci
 - **Áreas:** CASSAAM, Atención a Personas con Discapacidad y Servicios de Enlace se integran a Promoción de la Salud; CECART, a Capacitación y Adiestramiento Técnico.
 - **Tipo de actividad:** tercer dígito de `CVE_ACTIVIDAD` (1 = curso; 7 y 8 = taller).
 - **Asistencias programadas por mes:** se reparten entre los meses que dura cada apertura, en proporción a los días.
+- **Perfil de la población inscrita** (solo inscripciones realizadas): género (`CAN_MASCULINOS`, `CAN_FEMENINOS`); grupo etario: jóvenes (`CAN_00_A_02` a `CAN_16_A_19`), adultos (`CAN_20_A_59`) y adultos mayores (`CAN_MAS_DE_60`); y calidad jurídica (las 16 columnas `CAN_DERECHOHABIENTE` a `CAN_ADULTO_MAYOR_NODERER`). Solo se muestran las categorías con registros.
 - **Semáforo de avance:** morado, más de 125 %; verde, de 85 % a 115 %; amarillo, de 75 % a 85 % o de 115 % a 125 %; rojo, menos de 75 %.
-
-## Pendiente
-
-- **Usuarios nominales:** la pestaña Comparativo ya tiene su espacio. Se integrarán cuando se cuente con sus bases de datos (con año, OOAD, UOPSI y clave de actividad).
